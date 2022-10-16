@@ -135,37 +135,19 @@ seat theater[100];
 
 //for reproducibility
 
-
-// Outputs theater
-void display_seats()
+// in order to compare arrival times
+int arrival_times_comparator(const void *a, const void *b)
 {
-    int i, j, index;
-    for (i = 0; i < 10; i++)
-    {
-        printf("Row %d |", i);
-        for (j = 0; j < 10; j++)
-        {
-            index = i * 10 + j;
-            if (theater[index].state == AVAILABLE)
-            {
-                printf(" S%02d: --------- |", theater[index].id);
-            }
-            else
-            {
-                if (theater[index].cust == NULL)
-                {
-                    printf("error found NULL\n");
-                }
-                else
-                {
-                    printf(" S%02d: %s%d-%02d-C%02d |", theater[index].id, theater[index].p_args->sell_typ, theater[index].p_args->tempid, theater[index].count, theater[index].cust->customer_Id);
-                }
-            }
-        }
-        printf("\n");
-    }
-    printf("\n");
+    customer *c1 = (customer *)a;
+    customer *c2 = (customer *)b;
+    int r = c1->arrival_time - c2->arrival_time;
+    if (r > 0)
+        return 1;
+    if (r < 0)
+        return -1;
+    return r;
 }
+
 
 // initializes theater
 void theater_initialize()
@@ -187,6 +169,58 @@ void seat_manager_init()
     seat_manager.m_seat = &theater[40];
     seat_manager.l_seat = &theater[99];
     seat_manager.free_seats = 100;
+}
+
+// create the customer queues
+void create_customer_queue(int N)
+{
+    int i, j, arrival_time;
+    cQ = (customerQueue *)malloc(sizeof(customerQueue) * TOTAL_QUEUES);
+
+    // for reproducibility
+
+    for (i = 0; i < TOTAL_QUEUES; ++i)
+    {
+        cQ[i].client = (customer *)malloc(sizeof(customer) * N);
+        for (j = 0; j < N; ++j)
+        {
+            // creating arbitrary arrival times
+            arrival_time = rand() % 60;
+            cQ[i].client[j].customer_Id = i * N + j; // i*N+j to get a global customer ID
+            cQ[i].client[j].arrival_time = arrival_time;
+        }
+    }
+
+    //order customers according to arrival times
+    for (i = 0; i < TOTAL_QUEUES; ++i)
+    {
+        qsort((void *) cQ[i].client, N, sizeof(customer), arrival_times_comparator);
+    }
+
+    // initialize all mutex value
+    for (i = 0; i < ROW_SIZE; ++i)
+    {
+        pthread_mutex_init(&tickets[i].mutex, NULL);
+    }
+}
+
+// Outputs customer queue
+void display_customer_queue(int N)
+{
+    int i, j;
+
+    printf("\n--------------CUSTOMER QUEUE WITH <CUSTOMER ID : ARRIVAL TIME>----------------------\n");
+    for (i = 0; i < TOTAL_QUEUES; ++i)
+    {
+        printf("Queue %d :",i);
+        for (j = 0; j < N; ++j)
+        {
+
+            printf(" %03d:%02d |", cQ[i].client[j].customer_Id, cQ[i].client[j].arrival_time);
+        }
+        printf("\n----------------------------------------------");
+        printf("\n");
+    }
 }
 
 // moves on to seat h
@@ -359,7 +393,6 @@ seat *l_pick_free_seat()
     return allocated_seat_to_sell;
 }
 
-// one quanta will be served by the seller thread.
 void *thread_for_seller(pthread_args *pargs)
 {
     int customer_index = 0;
@@ -444,7 +477,7 @@ void *thread_for_seller(pthread_args *pargs)
             t_a_t_H = t_a_t_H + nc->tat;
 
             response_t_H = response_t_H + nc->res_t;
-            printf("Thread H1: End time = %d Arrival time = %d customer id = C%02d response time = %d Service time = %d\n",done_time,nc->arrival_time,nc->customer_Id,nc->res_t,serve_time);
+            printf("Thread H0: End time = %d Arrival time = %d customer id = C%02d response time = %d Service time = %d\n",done_time,nc->arrival_time,nc->customer_Id,nc->res_t,serve_time);
             sts->count = total_h_cust;
         }
 
@@ -574,70 +607,39 @@ void seller_thread_all_start()
     pthread_mutex_unlock(&mutex_cond);
 }
 
-// in order to compare arrival times
-int arrival_times_comparator(const void *a, const void *b)
+// Outputs theater
+void display_seats()
 {
-    customer *c1 = (customer *)a;
-    customer *c2 = (customer *)b;
-    int r = c1->arrival_time - c2->arrival_time;
-    if (r > 0)
-        return 1;
-    if (r < 0)
-        return -1;
-    return r;
-}
-
-// create the customer queues
-void create_customer_queue(int N)
-{
-    int i, j, arrival_time;
-    cQ = (customerQueue *)malloc(sizeof(customerQueue) * TOTAL_QUEUES);
-
-    // for reproducibility
-
-    for (i = 0; i < TOTAL_QUEUES; ++i)
+    int i, j, index;
+    for (i = 0; i < 10; i++)
     {
-        cQ[i].client = (customer *)malloc(sizeof(customer) * N);
-        for (j = 0; j < N; ++j)
+        printf("Row %d |", i + 1);
+        for (j = 0; j < 10; j++)
         {
-            // creating arbitrary arrival times
-            arrival_time = rand() % 60;
-            cQ[i].client[j].customer_Id = i * N + j; // i*N+j to get a global customer ID
-            cQ[i].client[j].arrival_time = arrival_time;
+            index = i * 10 + j;
+            if (theater[index].state == AVAILABLE)
+            {
+                printf(" Seat-%02d: -------- |", theater[index].id);
+            }
+            else
+            {
+                if (theater[index].cust == NULL)
+                {
+                    printf("error found NULL\n");
+                }
+                else
+                {
+                    printf(" Seat-%02d: %s%d%02d:C%02d |", theater[index].id, theater[index].p_args->sell_typ, theater[index].p_args->tempid, theater[index].count, theater[index].cust->customer_Id);
+                }
+            }
         }
-    }
-
-    //order customers according to arrival times
-    for (i = 0; i < TOTAL_QUEUES; ++i)
-    {
-        qsort((void *) cQ[i].client, N, sizeof(customer), arrival_times_comparator);
-    }
-
-    // initialize all mutex value
-    for (i = 0; i < ROW_SIZE; ++i)
-    {
-        pthread_mutex_init(&tickets[i].mutex, NULL);
-    }
-}
-
-// Outputs customer queue
-void display_customer_queue(int N)
-{
-    int i, j;
-
-    printf("\n--------------CUSTOMER QUEUE WITH ID and ARRIVAL TIME----------------------\n");
-    for (i = 0; i < TOTAL_QUEUES; ++i)
-    {
-
-        for (j = 0; j < N; ++j)
-        {
-
-            printf(" %03d:%02d |", cQ[i].client[j].customer_Id, cQ[i].client[j].arrival_time);
-        }
-        printf("\n----------------------------------------------");
         printf("\n");
     }
+    printf("\n");
 }
+
+
+
 
 // begins the simulation
 int main(int argc, char *argv[])
@@ -702,7 +704,7 @@ int main(int argc, char *argv[])
         serve_time++;
     }
 
-    printf("\n\n After Sale:\n");
+    printf("\n\n Post Sale:\n");
     display_seats();
 
     double th_h = total_h_cust/60.0;
@@ -718,13 +720,13 @@ int main(int argc, char *argv[])
     printf("\n\n Seats Allotted: Total: %d | Turn away: %d \n",
            (h_cust + m_cust + l_cust), N * 10 - (h_cust + m_cust + l_cust));
 
-    printf("\n Average Turn around Time (H): %f  |  Average Response Time (H): %f  |  Throughput (H): %f ", t_a_t_H == 0 ? 0 : t_a_t_H / total_h_cust*1.0,
+    printf("\n Avg Turn around Time for H: %0.03f  |  Avg Response Time for H: %0.03f  |  Throughput for H: %0.03f ", t_a_t_H == 0 ? 0 : t_a_t_H / total_h_cust*1.0,
            response_t_H == 0 ? 0 : response_t_H / total_h_cust*1.0,
            th_h);
-    printf("\n Average Turn around Time (M): %f  |  Average Response Time (M): %f  |  Throughput (M): %f ", t_a_t_M1 + t_a_t_M2 + t_a_t_M3 == 0 ? 0 : t_a_t_M1 + t_a_t_M2 + t_a_t_M3 / m_cust*1.0,
+    printf("\n Avg Turn around Time for M: %0.03f  |  Avg Response Time for M: %0.03f  |  Throughput for M: %0.03f ", t_a_t_M1 + t_a_t_M2 + t_a_t_M3 == 0 ? 0 : t_a_t_M1 + t_a_t_M2 + t_a_t_M3 / m_cust*1.0,
            response_t_M1 + response_t_M2 + response_t_M3 == 0 ? 0 : response_t_M1 + response_t_M2 + response_t_M3 / m_cust*1.0,
            th_m);
-    printf("\n Average Turn around Time (L): %f  |  Average Response Time (L): %f  |  Throughput (L): %f \n",
+    printf("\n Avg Turn around Time for L: %0.03f  |  Avg Response Time for L: %0.03f  |  Throughput for L: %0.03f \n",
            t_a_t_L1 + t_a_t_L2 + t_a_t_L3 + t_a_t_L4 + t_a_t_L5 + t_a_t_L6 == 0 ? 0 : t_a_t_L1 + t_a_t_L2 + t_a_t_L3 + t_a_t_L4 + t_a_t_L5 + t_a_t_L6 / l_cust*1.0,
            response_t_L1 + response_t_L2 + response_t_L3 + response_t_L4 + response_t_L5 + response_t_L6 == 0 ? 0 : response_t_L1 + response_t_L2 + response_t_L3 + response_t_L4 + response_t_L5 + response_t_L6 / l_cust*1.0,
            th_l);
