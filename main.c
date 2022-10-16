@@ -1,4 +1,4 @@
-//including necessary libraries
+//Including the required libraries
 #include <pthread.h>
 #include <string.h>
 #include <stdio.h>
@@ -14,9 +14,9 @@
 typedef struct customer
 {
     int arrival_time;
-    int custId;
-    int response_time;
-    int turnaround_time;
+    int customer_Id;
+    int res_t;
+    int tat;
 } customer;
 
 typedef struct customerQueue_struct
@@ -31,9 +31,9 @@ typedef struct row_struct
 
 typedef struct pthread_args_struct
 {
-    int tid;
-    int row_id;
-    char *seller_type;
+    int tempid;
+    int r_id;
+    char *sell_typ;
     customerQueue *cq;
 } pthread_args;
 
@@ -48,7 +48,7 @@ enum seat_state
 typedef struct seat_struct
 {
     int id;
-    int counter;
+    int count;
     enum seat_state state;
     customer *cust;
     pthread_args *p_args;
@@ -62,104 +62,103 @@ struct seat_manager_struct
     seat *l_seat;
 } seat_manager;
 
-// initializing parameters
+// setting up the parameters
 customerQueue *cQ;
 row tickets[10];
 static int serve_time = 0;
 int pt = 0;
 
-int h_customers = 0;
-int m_customers = 0;
-int l_customers = 0;
+int h_cust = 0;
+int m_cust = 0;
+int l_cust = 0;
 
-int thr_H = 0;
-int tt_H = 0;
-int rt_H = 0;
-int total_h_customers = 0;
+int throughput_H = 0;
+int t_a_t_H = 0;
+int response_t_H = 0;
+int total_h_cust = 0;
 
-int thr_L1 = 0;
-int tt_L1 = 0;
-int rt_L1 = 0;
-int total_l1_customers = 0;
+int throughput_L1 = 0;
+int t_a_t_L1 = 0;
+int response_t_L1 = 0;
+int total_l1_cust= 0;
 
-int thr_L2 = 0;
-int tt_L2 = 0;
-int rt_L2 = 0;
-int total_l2_customers = 0;
+int throughput_L2 = 0;
+int t_a_t_L2 = 0;
+int response_t_L2 = 0;
+int total_l2_cust = 0;
 
-int thr_L3 = 0;
-int tt_L3 = 0;
-int rt_L3 = 0;
-int total_l3_customers = 0;
+int throughput_L3 = 0;
+int t_a_t_L3 = 0;
+int response_t_L3 = 0;
+int total_l3_cust = 0;
 
-int thr_L4 = 0;
-int tt_L4 = 0;
-int rt_L4 = 0;
-int total_l4_customers = 0;
+int throughput_L4 = 0;
+int t_a_t_L4 = 0;
+int response_t_L4 = 0;
+int total_l4_cust = 0;
 
-int thr_L5 = 0;
-int tt_L5 = 0;
-int rt_L5 = 0;
-int total_l5_customers = 0;
+int throughput_L5 = 0;
+int t_a_t_L5 = 0;
+int response_t_L5 = 0;
+int total_l5_cust = 0;
 
-int thr_L6 = 0;
-int tt_L6 = 0;
-int rt_L6 = 0;
-int total_l6_customers = 0;
+int throughput_L6 = 0;
+int t_a_t_L6 = 0;
+int response_t_L6 = 0;
+int total_l6_cust = 0;
 
-int thr_M1 = 0;
-int tt_M1 = 0;
-int rt_M1 = 0;
-int total_m1_customers = 0;
+int throughput_M1 = 0;
+int t_a_t_M1 = 0;
+int response_t_M1 = 0;
+int total_m1_cust = 0;
 
-int thr_M2 = 0;
-int tt_M2 = 0;
-int rt_M2 = 0;
-int total_m2_customers = 0;
+int throughput_M2 = 0;
+int t_a_t_M2 = 0;
+int response_t_M2 = 0;
+int total_m2_cust = 0;
 
-int thr_M3 = 0;
-int tt_M3 = 0;
-int rt_M3 = 0;
-int total_m3_customers = 0;
+int throughput_M3 = 0;
+int t_a_t_M3 = 0;
+int response_t_M3 = 0;
+int total_m3_cust = 0;
 
-// total number of customers
+// total amount of customers
 int N;
 
-// initializing thread parameters
+// establishing the thread's parameters
 pthread_mutex_t mutex_cond = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t seat_lock = PTHREAD_MUTEX_INITIALIZER; // The lock for the seat manager struct
 
-// generating 100 seats
+// producing 100 seats
 seat theater[100];
 
 //for reproducibility
-//time_t t;
-//srand((unsigned)time(&t));
 
-// prints theater
+
+// Outputs theater
 void show_theater()
 {
-    int i, j, idx;
+    int i, j, index;
     for (i = 0; i < 10; i++)
     {
         printf("ROW %02d |", i);
         for (j = 0; j < 10; j++)
         {
-            idx = i * 10 + j;
-            if (theater[idx].state == AVAILABLE)
+            index = i * 10 + j;
+            if (theater[index].state == AVAILABLE)
             {
-                printf(" S%02d: ********* |", theater[idx].id);
+                printf(" S%02d: ********* |", theater[index].id);
             }
             else
             {
-                if (theater[idx].cust == NULL)
+                if (theater[index].cust == NULL)
                 {
                     printf("error found NULL\n");
                 }
                 else
                 {
-                    printf(" S%02d: %s%d=%02d=C%02d |", theater[idx].id, theater[idx].p_args->seller_type, theater[idx].p_args->tid, theater[idx].counter, theater[idx].cust->custId);
+                    printf(" S%02d: %s%d=%02d=C%02d |", theater[index].id, theater[index].p_args->sell_typ, theater[index].p_args->tempid, theater[index].count, theater[index].cust->customer_Id);
                 }
             }
         }
@@ -190,109 +189,100 @@ void initialize_seat_manager()
     seat_manager.free_seats = 100;
 }
 
-// goes to next h seat
+// moves on to seat h
 void h_next_seat()
 {
-    seat *tmp_seat = seat_manager.h_seat;
-    while (tmp_seat->state != AVAILABLE && seat_manager.free_seats > 0)
+    seat *temporary_seat = seat_manager.h_seat;
+    while (temporary_seat->state != AVAILABLE && seat_manager.free_seats > 0)
     {
-        tmp_seat++;
+        temporary_seat++;
     }
-    seat_manager.h_seat = tmp_seat;
+    seat_manager.h_seat = temporary_seat;
 }
 
-// goes to next m seat
+// moves on to seat m
 void m_next_seat()
 {
-    seat *tmp_seat = seat_manager.m_seat;
-    while ((tmp_seat->id==50)||(tmp_seat->state != AVAILABLE && seat_manager.free_seats > 0))
+    seat *temporary_seat = seat_manager.m_seat;
+    while ((temporary_seat->id==50)||(temporary_seat->state != AVAILABLE && seat_manager.free_seats > 0))
     {
-        // if seat id is 99, 89, 79, etc subtract 19 to move to previous row
+        // To go to the preceding row, subtract 19 if the seat ID is 99, 89, 79, etc.
 
-        switch (tmp_seat->id)
+        switch (temporary_seat->id)
         {
-	case 50:
-	    tmp_seat = &theater[30];
-	    continue;
+            case 50:
+                temporary_seat = &theater[30];
+                continue;
 
-	case 40 ... 49:
-	    if(tmp_seat->id==49)tmp_seat = &theater[20];
-	    else tmp_seat++;
-	    continue;
+            case 40 ... 49:
+                if(temporary_seat->id==49)temporary_seat = &theater[20];
+                else temporary_seat++;
+                continue;
 
-        case 10 ... 19:
-            if(tmp_seat->id==19)tmp_seat = &theater[60];
-	    else tmp_seat++;
-            continue;	
+            case 10 ... 19:
+                if(temporary_seat->id==19)temporary_seat = &theater[60];
+                else temporary_seat++;
+                continue;
 
-	case 30 ... 39:
-            if(tmp_seat->id==39)tmp_seat = &theater[20];
-	    else tmp_seat++;
-            continue;
+            case 30 ... 39:
+                if(temporary_seat->id==39)temporary_seat = &theater[20];
+                else temporary_seat++;
+                continue;
 
-        case 51 ... 59:
-            if(tmp_seat->id==59)tmp_seat = &theater[10];
-	    else tmp_seat++;
-            continue;
+            case 51 ... 59:
+                if(temporary_seat->id==59)temporary_seat = &theater[10];
+                else temporary_seat++;
+                continue;
 
-        case 20 ... 29:
-            if(tmp_seat->id==29)tmp_seat = &theater[51];
-	    else tmp_seat++;
-            continue;
+            case 20 ... 29:
+                if(temporary_seat->id==29)temporary_seat = &theater[51];
+                else temporary_seat++;
+                continue;
 
-        case 60 ... 69:
-            if(tmp_seat->id==69)tmp_seat = &theater[70];
-	    else tmp_seat++;
-            continue;
+            case 60 ... 69:
+                if(temporary_seat->id==69)temporary_seat = &theater[70];
+                else temporary_seat++;
+                continue;
 
-        //case 20 ... 29:
-        //    tmp_seat = &theater[70];
-        //    continue;
 
-        case 70 ... 79:
-            if(tmp_seat->id==79)tmp_seat = &theater[0];
-	    else tmp_seat++;
-            continue;
 
-        //case 10 ... 19:
-        //    tmp_seat = &theater[0];
-        //    continue;
+            case 70 ... 79:
+                if(temporary_seat->id==79)temporary_seat = &theater[0];
+                else temporary_seat++;
+                continue;
 
-        case 80 ... 89:
-            if(tmp_seat->id==89)tmp_seat = &theater[90];
-	    else tmp_seat++;
-            continue;
 
-        case 0 ... 9:
-            if(tmp_seat->id==9)tmp_seat = &theater[80];
-	    else tmp_seat++;
-            continue;
 
-        default:
-            tmp_seat++;
+            case 80 ... 89:
+                if(temporary_seat->id==89)temporary_seat = &theater[90];
+                else temporary_seat++;
+                continue;
+
+            case 0 ... 9:
+                if(temporary_seat->id==9)temporary_seat = &theater[80];
+                else temporary_seat++;
+                continue;
+
+            default:
+                temporary_seat++;
         }
     }
-    seat_manager.m_seat = tmp_seat;
+    seat_manager.m_seat = temporary_seat;
 }
 
-// goes to next l seat
+// moves on to seat l
 void l_next_seat()
 {
-    seat *tmp_seat = seat_manager.l_seat;
+    seat *temporary_seat = seat_manager.l_seat;
 
-    while (tmp_seat->state != AVAILABLE && seat_manager.free_seats > 0 && tmp_seat->id >=0)
-    {   
-	/*
-        if (tmp_seat->id % 10 == 9 && tmp_seat->id > 9)
-        {
-            tmp_seat = &theater[tmp_seat->id - 19];
-            continue;
-        }*/
+    while (temporary_seat->state != AVAILABLE && seat_manager.free_seats > 0 && temporary_seat->id >=0)
+    {
+
 
         // try the next seat
-        tmp_seat--;
+        temporary_seat--;
     }
-    seat_manager.l_seat = tmp_seat;
+    seat_manager.l_seat = temporary_seat;
 }
 
 // sells h seat
@@ -302,14 +292,14 @@ seat *get_h_seat_to_sell()
     pthread_mutex_lock(&seat_lock);
     if (seat_manager.free_seats > 0)
     {
-        // If the seat pointed to by the seat_manager is not free, get a free seat.
+        // Find a free seat if the one the seat manager referred to isn't available.
         if (seat_manager.h_seat->state != AVAILABLE)
             h_next_seat();
         allocated_seat_to_sell = seat_manager.h_seat;
         allocated_seat_to_sell->state = PROCESSING;
         seat_manager.free_seats--;
-        h_customers++;
-	//seat_manager.h_seat++;
+        h_cust++;
+
     }
     else
     {
@@ -326,15 +316,15 @@ seat *get_m_seat_to_sell()
     pthread_mutex_lock(&seat_lock);
     if (seat_manager.free_seats > 0)
     {
-        // If the seat pointed to by the seat_manager is not free, get a free seat.
-        if ((seat_manager.m_seat->id==50&&seat_manager.m_seat->state == AVAILABLE)||seat_manager.m_seat->state != AVAILABLE)
-            m_next_seat();
+        //Find a free seat if the one the seat manager referred to isn't available.
+
+        m_next_seat();
         allocated_seat_to_sell = seat_manager.m_seat;
-	printf("M seat: %d \n",seat_manager.m_seat->id);
+        printf("M seat: %d \n",seat_manager.m_seat->id);
         allocated_seat_to_sell->state = PROCESSING;
         seat_manager.free_seats--;
-        m_customers++;
-	seat_manager.m_seat++;
+        m_cust++;
+        seat_manager.m_seat++;
     }
     else
     {
@@ -351,15 +341,15 @@ seat *get_l_seat_to_sell()
     pthread_mutex_lock(&seat_lock);
     if (seat_manager.free_seats > 0)
     {
-        // If the seat pointed to by the seat_manager is not free, get a free seat.
+        // Find a free seat if the one the seat manager referred to isn't available.
         if (seat_manager.l_seat->state != AVAILABLE)
             l_next_seat();
         allocated_seat_to_sell = seat_manager.l_seat;
-	printf("L seat:%d\n", seat_manager.l_seat->id);
+        printf("L seat:%d\n", seat_manager.l_seat->id);
         allocated_seat_to_sell->state = PROCESSING;
         seat_manager.free_seats--;
-        l_customers++;
-	//seat_manager.l_seat++;
+        l_cust++;
+
     }
     else
     {
@@ -369,10 +359,10 @@ seat *get_l_seat_to_sell()
     return allocated_seat_to_sell;
 }
 
-// seller thread to serve one quanta
+// one quanta will be served by the seller thread.
 void *seller_thread(pthread_args *pargs)
 {
-    int customer_idx = 0;
+    int customer_index = 0;
     int all_done = 0;
     int process_time = 0;
     int done_time = 0;
@@ -386,24 +376,24 @@ void *seller_thread(pthread_args *pargs)
         pthread_cond_wait(&cond, &mutex_cond);
         pthread_mutex_unlock(&mutex_cond);
 
-        // Check to see if we are in the middle of a sale and continue
+        // Verify if we are presently having a sale before continuing.
         if (serve_time < done_time)
         {
-            //printf("Serving by %s%d\n",pargs->seller_type,pargs->tid);
+
             continue;
         }
 
-        // Skip this turn if next customer has not arrived yet.
-        if (pargs->cq->client[customer_idx].arrival_time > serve_time)
+        // If the next customer has not yet arrived, skip this turn.
+        if (pargs->cq->client[customer_index].arrival_time > serve_time)
         {
-	    //printf("\nC%d=====%d===%d",pargs->cq->client[customer_idx].custId,pargs->cq->client[customer_idx].arrival_time,serve_time);
+
             continue;
         }
 
-        // get the customer if we are not done yet
-        if (customer_idx < N)
+        // Obtain the client if we are not yet finished.
+        if (customer_index < N)
         {
-            nc = &(pargs->cq->client[customer_idx++]);
+            nc = &(pargs->cq->client[customer_index++]);
         }
         else
         {
@@ -414,166 +404,160 @@ void *seller_thread(pthread_args *pargs)
             continue;
         }
 
-        // We have a customer to process now, get seat and random wait time depending on the seller type
-        if (strcmp(pargs->seller_type, "H") == 0)
+        // Currently, we have a customer to serve. Please have a seat, since the wait time will vary based on the seller.
+        if (strcmp(pargs->sell_typ, "H") == 0)
         {
             sts = get_h_seat_to_sell();
             process_time = 1 + (rand() % 1);
-	    nc->response_time=serve_time-nc->arrival_time;
+            nc->res_t=serve_time-nc->arrival_time;
         }
-        else if (strcmp(pargs->seller_type, "M") == 0)
+        else if (strcmp(pargs->sell_typ, "M") == 0)
         {
             sts = get_m_seat_to_sell();
             process_time = 2 + (rand() % 2);
-	    nc->response_time=serve_time-nc->arrival_time;
+            nc->res_t=serve_time-nc->arrival_time;
         }
         else
         {
             sts = get_l_seat_to_sell();
             process_time = 4 + (rand() % 4);
-	    nc->response_time=serve_time-nc->arrival_time;
+            nc->res_t=serve_time-nc->arrival_time;
         };
 
         if (sts == NULL)
         {
-            //printf(" THEATER SOLD OUT!!!\n");
+
             break;
         }
 
-        // Finish processing the customer
+        // concluding the customer's processing
         done_time = serve_time + process_time;
-	nc->turnaround_time = done_time - nc->arrival_time +1;
+        nc->tat = done_time - nc->arrival_time +1;
         sts->cust = nc;
         sts->p_args = pargs;
         sts->state = SOLD;
-        if (strcmp(pargs->seller_type, "H") == 0)
+        if (strcmp(pargs->sell_typ, "H") == 0)
         {
-            total_h_customers++;
-            //thr_H = thr_H + process_time;
-	    thr_H++;
-            //tt_H = tt_H + (done_time + pargs->cq->client[customer_idx].arrival_time);
-	    tt_H = tt_H + nc->turnaround_time;
-	    //printf("%d=%d=C%02d=%d\n",done_time,pargs->cq->client[customer_idx].arrival_time,pargs->cq->client[customer_idx].custId,serve_time);
-            //rt_H = rt_H + (done_time - process_time);
-	    rt_H = rt_H + nc->response_time;
-	    printf("Thread H0===%d=%d=C%02d=%d=%d\n",done_time,nc->arrival_time,nc->custId,nc->response_time,serve_time);
-            sts->counter = total_h_customers;
+            total_h_cust++;
+            throughput_H++;
+
+            t_a_t_H = t_a_t_H + nc->tat;
+
+            response_t_H = response_t_H + nc->res_t;
+            printf("Thread H0===%d=%d=C%02d=%d=%d\n",done_time,nc->arrival_time,nc->customer_Id,nc->res_t,serve_time);
+            sts->count = total_h_cust;
         }
 
-        if (strcmp(pargs->seller_type, "M") == 0)
+        if (strcmp(pargs->sell_typ, "M") == 0)
         {
-            if (pargs->tid == 1)
+            if (pargs->tempid == 1)
             {
-                total_m1_customers++;
-                sts->counter = total_m1_customers;
-                //thr_M1 = thr_M1 + process_time;
-		thr_M1++;
-		tt_M1 = tt_M1 + nc->turnaround_time;
-		rt_M1 = rt_M1 + nc->response_time;
-		printf("Thread M1===%d=%d=C%02d=%d=%d\n",done_time,nc->arrival_time,nc->custId,nc->response_time,serve_time);
-                //tt_M1 = tt_M1 + (done_time + pargs->cq->client[customer_idx].arrival_time);
-                //rt_M1 = rt_M1 + (done_time - process_time);
+                total_m1_cust++;
+                sts->count = total_m1_cust;
+
+                throughput_M1++;
+                t_a_t_M1 = t_a_t_M1 + nc->tat;
+                response_t_M1 = response_t_M1 + nc->res_t;
+                printf("Thread M1===%d=%d=C%02d=%d=%d\n",done_time,nc->arrival_time,nc->customer_Id,nc->res_t,serve_time);
+
             }
-            if (pargs->tid == 2)
+            if (pargs->tempid == 2)
             {
-                total_m2_customers++;
-                sts->counter = total_m2_customers;
-                //thr_M2 = thr_M2 + process_time;
-		thr_M2++;
-		tt_M2 =tt_M2 + nc->turnaround_time;
-		rt_M2 = rt_M2 + nc->response_time;
-		printf("Thread M2===%d=%d=C%02d=%d=%d\n",done_time,nc->arrival_time,nc->custId,nc->response_time,serve_time);
-                //tt_M2 = tt_M2 + (done_time + pargs->cq->client[customer_idx].arrival_time);
-                //rt_M2 = rt_M2 + (done_time - process_time);
+                total_m2_cust++;
+                sts->count = total_m2_cust;
+
+                throughput_M2++;
+                t_a_t_M2 =t_a_t_M2 + nc->tat;
+                response_t_M2 = response_t_M2 + nc->res_t;
+                printf("Thread M2===%d=%d=C%02d=%d=%d\n",done_time,nc->arrival_time,nc->customer_Id,nc->res_t,serve_time);
+
             }
-            if (pargs->tid == 3)
+            if (pargs->tempid == 3)
             {
-                total_m3_customers++;
-                sts->counter = total_m3_customers;
-                //thr_M3 = thr_M3 + process_time;
-		thr_M3++;
-		tt_M3 = tt_M3 + nc->turnaround_time;
-		rt_M3 = rt_M3 + nc->response_time;
-		printf("Thread M3===%d=%d=C%02d=%d=%d\n",done_time,nc->arrival_time,nc->custId,nc->response_time,serve_time);
-                //tt_M3 = tt_M3 + (done_time + pargs->cq->client[customer_idx].arrival_time);
-                //rt_M3 = rt_M3 + (done_time - process_time);
+                total_m3_cust++;
+                sts->count = total_m3_cust;
+
+                throughput_M3++;
+                t_a_t_M3 = t_a_t_M3 + nc->tat;
+                response_t_M3 = response_t_M3 + nc->res_t;
+                printf("Thread M3===%d=%d=C%02d=%d=%d\n",done_time,nc->arrival_time,nc->customer_Id,nc->res_t,serve_time);
+
             }
         }
 
-        if (strcmp(pargs->seller_type, "L") == 0)
+        if (strcmp(pargs->sell_typ, "L") == 0)
         {
-            if (pargs->tid == 4)
+            if (pargs->tempid == 4)
             {
-                total_l1_customers++;
-                //printf("\n %d ********************************\n", total_l1_customers);
-                sts->counter = total_l1_customers;
-                //thr_L1 = thr_L1 + process_time;
-		thr_L1++;
-		tt_L1 = tt_L1 + nc->turnaround_time;
-                rt_L1 = rt_L1 + nc->response_time;
-                printf("Thread L1===%d=%d=C%02d=%d=%d\n",done_time,nc->arrival_time,nc->custId,nc->response_time,serve_time);
-                //tt_L1 = tt_L1 + (done_time + pargs->cq->client[customer_idx].arrival_time);
-                //rt_L1 = rt_L1 + (done_time - process_time);
+                total_l1_cust++;
+
+                sts->count = total_l1_cust;
+
+                throughput_L1++;
+                t_a_t_L1 = t_a_t_L1 + nc->tat;
+                response_t_L1 = response_t_L1 + nc->res_t;
+                printf("Thread L1===%d=%d=C%02d=%d=%d\n",done_time,nc->arrival_time,nc->customer_Id,nc->res_t,serve_time);
+
+
             }
-            if (pargs->tid == 5)
+            if (pargs->tempid == 5)
             {
-                total_l2_customers++;
-                sts->counter = total_l2_customers;
-                //thr_L2 = thr_L2 + process_time;
-		thr_L2++;
-		tt_L2 = tt_L2 + nc->turnaround_time;
-                rt_L2 = rt_L2 + nc->response_time;
-                printf("Thread L2===%d=%d=C%02d=%d=%d\n",done_time,nc->arrival_time,nc->custId,nc->response_time,serve_time);
-                //tt_L2 = tt_L2 + (done_time + pargs->cq->client[customer_idx].arrival_time);
-                //rt_L2 = rt_L2 + (done_time - process_time);
+                total_l2_cust++;
+                sts->count= total_l2_cust;
+
+                throughput_L2++;
+                t_a_t_L2 = t_a_t_L2 + nc->tat;
+                response_t_L2 = response_t_L2+ nc->res_t;
+                printf("Thread L2===%d=%d=C%02d=%d=%d\n",done_time,nc->arrival_time,nc->customer_Id,nc->res_t,serve_time);
+
+
             }
-            if (pargs->tid == 6)
+            if (pargs->tempid == 6)
             {
-                total_l3_customers++;
-                sts->counter = total_l3_customers;
-                //thr_L3 = thr_L3 + process_time;
-		thr_L3++;
-		tt_L3 = tt_L3 + nc->turnaround_time;
-                rt_L3 = rt_L3 + nc->response_time;
-                printf("Thread L3===%d=%d=C%02d=%d=%d\n",done_time,nc->arrival_time,nc->custId,nc->response_time,serve_time);
-                //tt_L3 = tt_L3 + (done_time + pargs->cq->client[customer_idx].arrival_time);
-                //rt_L3 = rt_L3 + (done_time - process_time);
+                total_l3_cust++;
+                sts->count = total_l3_cust;
+
+                throughput_L3++;
+                t_a_t_L3= t_a_t_L3 + nc->tat;
+                response_t_L3 = response_t_L3 + nc->res_t;
+                printf("Thread L3===%d=%d=C%02d=%d=%d\n",done_time,nc->arrival_time,nc->customer_Id,nc->res_t,serve_time);
+
+
             }
-            if (pargs->tid == 7)
+            if (pargs->tempid == 7)
             {
-                total_l4_customers++;
-                sts->counter = total_l4_customers;
-                //thr_L4 = thr_L4 + process_time;
-		thr_L4++;
-		tt_L4 = tt_L4 + nc->turnaround_time;
-                rt_L4 = rt_L4 + nc->response_time;
-                printf("Thread L4===%d=%d=C%02d=%d=%d\n",done_time,nc->arrival_time,nc->custId,nc->response_time,serve_time);
-                //tt_L4 = tt_L4 + (done_time + pargs->cq->client[customer_idx].arrival_time);
-                //rt_L4 = rt_L4 + (done_time - process_time);
+                total_l4_cust++;
+                sts->count = total_l4_cust;
+
+                throughput_L4++;
+                t_a_t_L4 = t_a_t_L4 + nc->tat;
+                response_t_L4 = response_t_L4 + nc->res_t;
+                printf("Thread L4===%d=%d=C%02d=%d=%d\n",done_time,nc->arrival_time,nc->customer_Id,nc->res_t,serve_time);
+
+
             }
-            if (pargs->tid == 8)
+            if (pargs->tempid == 8)
             {
-                total_l5_customers++;
-                sts->counter = total_l5_customers;
-                //thr_L5 = thr_L5 + process_time;
-		thr_L5++;
-		tt_L5 = tt_L5 + nc->turnaround_time;
-                rt_L5 = rt_L5 + nc->response_time;
-                printf("Thread L5===%d=%d=C%02d=%d=%d\n",done_time,nc->arrival_time,nc->custId,nc->response_time,serve_time);
-                //tt_L5 = tt_L5 + (done_time + pargs->cq->client[customer_idx].arrival_time);
-                //rt_L5 = rt_L5 + (done_time - process_time);
+                total_l5_cust++;
+                sts->count = total_l5_cust;
+
+                throughput_L5++;
+                t_a_t_L5 = t_a_t_L5 + nc->tat;
+                response_t_L5 = response_t_L5 + nc->res_t;
+                printf("Thread L5===%d=%d=C%02d=%d=%d\n",done_time,nc->arrival_time,nc->customer_Id,nc->res_t,serve_time);
+
+
             }
-            if (pargs->tid == 9)
+            if (pargs->tempid == 9)
             {
-                total_l6_customers++;
-                sts->counter = total_l6_customers;
-                //thr_L6 = thr_L6 + process_time;
-		thr_L6++;
-		tt_L6 = tt_L6 + nc->turnaround_time;
-                rt_L6 = rt_L6 + nc->response_time;
-                printf("Thread L6===%d=%d=C%02d=%d=%d\n",done_time,nc->arrival_time,nc->custId,nc->response_time,serve_time);
-                //tt_L6 = tt_L6 + (done_time + pargs->cq->client[customer_idx].arrival_time);
-                //rt_L6 = rt_L6 + (done_time - process_time);
+                total_l6_cust++;
+                sts->count = total_l6_cust;
+
+                throughput_L6++;
+                t_a_t_L6 = t_a_t_L6 + nc->tat;
+                response_t_L6 = response_t_L6 + nc->res_t;
+                printf("Thread L6===%d=%d=C%02d=%d=%d\n",done_time,nc->arrival_time,nc->customer_Id,nc->res_t,serve_time);
+
             }
         };
         pt++;
@@ -582,7 +566,7 @@ void *seller_thread(pthread_args *pargs)
     return NULL;
 }
 
-// starts all threads
+// launches each thread
 void start_all_seller_threads()
 {
     pthread_mutex_lock(&mutex_cond);
@@ -590,7 +574,7 @@ void start_all_seller_threads()
     pthread_mutex_unlock(&mutex_cond);
 }
 
-// for comparing arrival times
+// in order to compare arrival times
 int compare_arrival_times(const void *a, const void *b)
 {
     customer *c1 = (customer *)a;
@@ -603,27 +587,27 @@ int compare_arrival_times(const void *a, const void *b)
     return r;
 }
 
-// generate the customer queues
+// create the customer queues
 void setup_customer_queue(int N)
 {
     int i, j, arrival_time;
     cQ = (customerQueue *)malloc(sizeof(customerQueue) * TOTAL_QUEUES);
 
     // for reproducibility
-    //srand(5);
+
     for (i = 0; i < TOTAL_QUEUES; ++i)
     {
         cQ[i].client = (customer *)malloc(sizeof(customer) * N);
         for (j = 0; j < N; ++j)
         {
-            // generating random arrival times
+            // creating arbitrary arrival times
             arrival_time = rand() % 60;
-            cQ[i].client[j].custId = i * N + j; // i*N+j to get a global customer ID
+            cQ[i].client[j].customer_Id = i * N + j; // i*N+j to get a global customer ID
             cQ[i].client[j].arrival_time = arrival_time;
         }
     }
 
-    // sort customer based on arrival times
+    //order customers according to arrival times
     for (i = 0; i < TOTAL_QUEUES; ++i)
     {
         qsort((void *)cQ[i].client, N, sizeof(customer), compare_arrival_times);
@@ -636,7 +620,7 @@ void setup_customer_queue(int N)
     }
 }
 
-// prints customer queue
+// Outputs customer queue
 void show_customer_queue(int N)
 {
     int i, j;
@@ -648,14 +632,14 @@ void show_customer_queue(int N)
         for (j = 0; j < N; ++j)
         {
 
-            printf(" %03d:%02d |", cQ[i].client[j].custId, cQ[i].client[j].arrival_time);
+            printf(" %03d:%02d |", cQ[i].client[j].customer_Id, cQ[i].client[j].arrival_time);
         }
         printf("\n----------------------------------------------");
         printf("\n");
     }
 }
 
-// starts simulation
+// begins the simulation
 int main(int argc, char *argv[])
 {
 
@@ -678,10 +662,10 @@ int main(int argc, char *argv[])
     pargs = (pthread_args *)malloc(sizeof(pthread_args));
 
     // H
-    pargs->seller_type = (char *)malloc(strlen("H") + 1);
-    memcpy(pargs->seller_type, "H", strlen("H"));
-    pargs->row_id = 0;
-    pargs->tid = 0;
+    pargs->sell_typ = (char *)malloc(strlen("H") + 1);
+    memcpy(pargs->sell_typ, "H", strlen("H"));
+    pargs->r_id = 0;
+    pargs->tempid = 0;
     pargs->cq = &cQ[0];
     pthread_create(&tids[0], NULL, (void *)seller_thread, (void *)pargs);
 
@@ -689,10 +673,10 @@ int main(int argc, char *argv[])
     for (i = 1; i < 4; i++)
     {
         pargs = (pthread_args *)malloc(sizeof(pthread_args));
-        pargs->seller_type = (char *)malloc(strlen("M") + 1);
-        memcpy(pargs->seller_type, "M", strlen("M"));
-        pargs->row_id = i;
-        pargs->tid = i;
+        pargs->sell_typ = (char *)malloc(strlen("M") + 1);
+        memcpy(pargs->sell_typ, "M", strlen("M"));
+        pargs->r_id = i;
+        pargs->tempid = i;
         pargs->cq = &cQ[i];
         pthread_create(&tids[i], NULL, (void *)seller_thread, (void *)pargs);
     }
@@ -701,52 +685,48 @@ int main(int argc, char *argv[])
     for (i = 4; i < 10; i++)
     {
         pargs = (pthread_args *)malloc(sizeof(pthread_args));
-        pargs->seller_type = (char *)malloc(strlen("L") + 1);
-        memcpy(pargs->seller_type, "L", strlen("L"));
-        pargs->row_id = i;
-        pargs->tid = i;
+        pargs->sell_typ = (char *)malloc(strlen("L") + 1);
+        memcpy(pargs->sell_typ, "L", strlen("L"));
+        pargs->r_id = i;
+        pargs->tempid = i;
         pargs->cq = &cQ[i];
         pthread_create(&tids[i], NULL, (void *)seller_thread, (void *)pargs);
     }
 
-    // start simulation clock
+    // begin simulation clock
     for (i = 0; i < 500; i++)
     {
         start_all_seller_threads();
         usleep(30);
-       /*if (pt)
-        {
-            show_theater();
-            pt = 0;
-        }*/
+
         serve_time++;
     }
 
     printf("\n\n After Sale:\n");
     show_theater();
 
-    double th_h = total_h_customers/60.0;
-    double th_m = m_customers/180.0;
-    double th_l = l_customers/360.0;
+    double th_h = total_h_cust/60.0;
+    double th_m = m_cust/180.0;
+    double th_l = l_cust/360.0;
 
-    int th_nh = total_h_customers/1;
-    int th_nm= m_customers/3;
-    int th_nl = l_customers/6;
+    int th_nh = total_h_cust/1;
+    int th_nm= m_cust/3;
+    int th_nl = l_cust/6;
 
 
 
     printf("\n\n Seats Allocated: Total: %d | Turn away: %d \n",
-                    (h_customers + m_customers + l_customers), N * 10 - (h_customers + m_customers + l_customers));
+           (h_cust + m_cust + l_cust), N * 10 - (h_cust + m_cust + l_cust));
 
-    printf("\n Average Turn around Time (H): %f  |  Average Response Time (H): %f  |  Throughput (H): %f ", tt_H == 0 ? 0 : tt_H / total_h_customers*1.0, 
-		                                                                                                                     rt_H == 0 ? 0 : rt_H / total_h_customers*1.0, 
-																     th_h);
-    printf("\n Average Turn around Time (M): %f  |  Average Response Time (M): %f  |  Throughput (M): %f ", tt_M1 + tt_M2 + tt_M3 == 0 ? 0 : tt_M1 + tt_M2 + tt_M3 / m_customers*1.0, 
-		                                                                                                                  rt_M1 + rt_M2 + rt_M3 == 0 ? 0 : rt_M1 + rt_M2 + rt_M3 / m_customers*1.0, 
-																  th_m);
-    printf("\n Average Turn around Time (L): %f  |  Average Response Time (L): %f  |  Throughput (L): %f \n", 
-		    tt_L1 + tt_L2 + tt_L3 + tt_L4 + tt_L5 + tt_L6 == 0 ? 0 : tt_L1 + tt_L2 + tt_L3 + tt_L4 + tt_L5 + tt_L6 / l_customers*1.0, 
-		    rt_L1 + rt_L2 + rt_L3 + rt_L4 + rt_L5 + rt_L6 == 0 ? 0 : rt_L1 + rt_L2 + rt_L3 + rt_L4 + rt_L5 + rt_L6 / l_customers*1.0, 
-		    th_l);
+    printf("\n Average Turn around Time (H): %f  |  Average Response Time (H): %f  |  Throughput (H): %f ", t_a_t_H == 0 ? 0 : t_a_t_H / total_h_cust*1.0,
+           response_t_H == 0 ? 0 : response_t_H / total_h_cust*1.0,
+           th_h);
+    printf("\n Average Turn around Time (M): %f  |  Average Response Time (M): %f  |  Throughput (M): %f ", t_a_t_M1 + t_a_t_M2 + t_a_t_M3 == 0 ? 0 : t_a_t_M1 + t_a_t_M2 + t_a_t_M3 / m_cust*1.0,
+           response_t_M1 + response_t_M2 + response_t_M3 == 0 ? 0 : response_t_M1 + response_t_M2 + response_t_M3 / m_cust*1.0,
+           th_m);
+    printf("\n Average Turn around Time (L): %f  |  Average Response Time (L): %f  |  Throughput (L): %f \n",
+           t_a_t_L1 + t_a_t_L2 + t_a_t_L3 + t_a_t_L4 + t_a_t_L5 + t_a_t_L6 == 0 ? 0 : t_a_t_L1 + t_a_t_L2 + t_a_t_L3 + t_a_t_L4 + t_a_t_L5 + t_a_t_L6 / l_cust*1.0,
+           response_t_L1 + response_t_L2 + response_t_L3 + response_t_L4 + response_t_L5 + response_t_L6 == 0 ? 0 : response_t_L1 + response_t_L2 + response_t_L3 + response_t_L4 + response_t_L5 + response_t_L6 / l_cust*1.0,
+           th_l);
 
 }
